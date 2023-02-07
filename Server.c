@@ -44,6 +44,7 @@ int main(int argc, char **argv){
   bzero(buffer, 1024);
   addr_size = sizeof(client_addr);
   recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&client_addr, &addr_size);
+  printf("Message to echo: %s \n",buffer);
   // Echo back the message from client
   sendto(sockfd, buffer, 1024, 0, (struct sockaddr*)&client_addr, addr_size);
  
