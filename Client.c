@@ -50,6 +50,7 @@ int main(int argc, char **argv){
   // Send message to server with retry option
   addr_size = sizeof(serverAddr);
   for(i=1; i<= max_try; i++){
+    printf("Message sent: %s \n",buffer);
     send_respond = sendto(sockfd, buffer, 1024, 0, (struct sockaddr*)&serverAddr, addr_size);
     
     // Fail to send message
@@ -63,6 +64,7 @@ int main(int argc, char **argv){
         // Receive echo message from server 
         bzero(buffer, 1024);
         recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&serverAddr, &addr_size);
+        printf("Message received: %s \n",buffer);
         exit(0);
 
     }
