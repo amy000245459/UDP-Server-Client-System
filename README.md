@@ -16,8 +16,8 @@ client.exe <IP> <Port> <Message> <Max_try(optional)>
 ## [Demo] To run the system:
 1. Build the execution for server and client by:
 ```
-gcc server.c -o server
-gcc client.c -o client
+gcc Server.c -o server
+gcc Client.c -o client
 ```
 2. Start server:
 ```
