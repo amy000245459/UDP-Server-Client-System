@@ -8,11 +8,10 @@
  
 // Define fixed variable for waiting interval between retries
 const int POWER_BASED = 2;
-const int SEC_BASED = 500; // 500ms
-const int MAX_INTERVAL=  8000; //8000ms = 8s 
+const float SEC_BASED = 0.5; // 500ms
+const int MAX_INTERVAL = 8; //8000ms = 8s 
  
 int main(int argc, char **argv){
- 
   int max_try; 
   if(argc== 4){
     // Setup default value for max_try
@@ -30,10 +29,12 @@ int main(int argc, char **argv){
   
   char *ip = argv[1];
   int port = atoi(argv[2]);
-  int sockfd, send_respond,i,wait_interval; 
+  int sockfd, respond,i; 
+  float wait_interval; 
+  int try_num = 1;
   int multiplier = POWER_BASED;
   struct sockaddr_in serverAddr;
-  struct timeval timeout;
+  struct timeval timeout = {.tv_sec=1,.tv_usec=0};
   socklen_t addr_size;
 
   // Setup message
@@ -47,38 +48,41 @@ int main(int argc, char **argv){
     perror("Socket error");
     exit(1);
   }
+  
   memset(&serverAddr, '\0', sizeof(serverAddr));
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_port = htons(port);
   serverAddr.sin_addr.s_addr = inet_addr(ip);
   
+  //Set timeout for socket
+  setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout,sizeof(timeout));
+  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,sizeof(timeout));
   
   // Send message to server with retry option
   addr_size = sizeof(serverAddr);   
   printf("[Message sent] %s \n",buffer);
-  for(i=1; i<= max_try; i++){
+  while(try_num <= max_try){
+
+    sendto(sockfd, buffer, 1024, 0, (struct sockaddr*)&serverAddr, addr_size);
     
-    //Set Timeout
-    wait_interval = SEC_BASED * multiplier;
-    wait_interval = ((MAX_INTERVAL)<(wait_interval))? MAX_INTERVAL:wait_interval;
-    multiplier = multiplier*POWER_BASED;
-    timeout.tv_sec = wait_interval;
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,sizeof(timeout));
-
-    send_respond = sendto(sockfd, buffer, 1024, 0, (struct sockaddr*)&serverAddr, addr_size);
-
-    // Fail to send message
-    if (send_respond!=0){
-        printf("Number of attampt: %d ; Waiting interval: %d\n",i,wait_interval);
-    }else{
+    // Receive echo message from server 
+    bzero(buffer, 1024);
+    respond = recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&serverAddr, &addr_size);
+    
+    if (respond!=-1){
         // Success 
-        // Receive echo message from server 
-        bzero(buffer, 1024);
-        recvfrom(sockfd, buffer, 1024, 0, (struct sockaddr*)&serverAddr, &addr_size);
         printf("[Message received] %s \n",buffer);
         exit(0);
+        }
+        
+    // setup waitting_time 
+    wait_interval = SEC_BASED * multiplier;
+    wait_interval = ((MAX_INTERVAL)<(wait_interval))? MAX_INTERVAL:wait_interval;
+    printf("Number of attampt: %d ; Waiting interval: %f(s) \n",try_num,wait_interval);
 
-    }
+    sleep((int)wait_interval);
+    try_num ++;
+    multiplier = multiplier*POWER_BASED;
   }
   printf("Faild to send message to server\n");
   exit(1);
