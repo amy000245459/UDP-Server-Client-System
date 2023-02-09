@@ -19,6 +19,10 @@ int main(int argc, char **argv){
     max_try = 1;
   }else if( argc== 5){
     max_try = atoi(argv[4]);
+   if(max_try >10){
+      printf("Input of retry time excess the maximun(10) \n");
+      exit(1);
+    }
   }else{
     printf("Usage: %s <IP> <port> <message> <max try(optional)>\n", argv[0]);
     exit(1);
